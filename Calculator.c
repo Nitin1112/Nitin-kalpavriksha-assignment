@@ -12,6 +12,7 @@ int main(){
 
                     // Formatting and verifying input string 
     //----------------------------------------------------------------------
+
     inputStr[strlen(inputStr) - 1] = '\0';
     for (int i = 0; i < strlen(inputStr); i++) {
         if (inputStr[i] == ' ') {
@@ -30,25 +31,26 @@ int main(){
 
                     // Handling * and / operators
     //----------------------------------------------------------------------
+
     int i = 0;
     char tempStr[1000] = "";
     while (i < strlen(calStr)) {
         char num1Str[100] = "";
         char num2Str[100] = "";
         int idx1 = 0, idx2 = 0;
-        int num1, num2;
+        double num1, num2;
         char op;
 
-        // Extract first number
-        while (i < strlen(calStr) && isdigit(calStr[i])) {
+        // Extract first number 
+        while (i < strlen(calStr) && (isdigit(calStr[i]) || calStr[i] == '.')) {
             num1Str[idx1++] = calStr[i++];
         }
         num1Str[idx1] = '\0';
-        num1 = atoi(num1Str);
+        num1 = strtod(num1Str, NULL);
 
         if (i >= strlen(calStr)) {
             char temp[50];
-            sprintf(temp, "%d", num1);
+            sprintf(temp, "%.10g", num1);
             strcat(tempStr, temp);
             break;
         }
@@ -59,11 +61,11 @@ int main(){
         while (op == '*' || op == '/') {
             // Extract second number
             idx2 = 0;
-            while (i < strlen(calStr) && isdigit(calStr[i])) {
+            while (i < strlen(calStr) && (isdigit(calStr[i]) || calStr[i] == '.')) {
                 num2Str[idx2++] = calStr[i++];
             }
             num2Str[idx2] = '\0';
-            num2 = atoi(num2Str);
+            num2 = strtod(num2Str, NULL);
 
             if (op == '*') {
                 num1 *= num2;
@@ -86,7 +88,7 @@ int main(){
 
         // Storing the result
         char temp[50];
-        sprintf(temp, "%d", num1);
+        sprintf(temp, "%.10g", num1); 
         strcat(tempStr, temp);
 
         if (op == '+' || op == '-') {
@@ -98,7 +100,8 @@ int main(){
 
                         // Handling + and - operators
     //----------------------------------------------------------------------
-    int finalResult = 0;
+
+    double finalResult = 0;
     i = 0;
     int sign = 1;
     while (i < strlen(tempStr)) {
@@ -114,14 +117,14 @@ int main(){
             i++;
         }
 
-        while (i < strlen(tempStr) && isdigit(tempStr[i])) {
+        while (i < strlen(tempStr) && (isdigit(tempStr[i]) || tempStr[i] == '.')) {
             numStr[idx++] = tempStr[i++];
         }
         numStr[idx] = '\0';
 
-        finalResult += sign * atoi(numStr);
+        finalResult += sign * strtod(numStr, NULL);
     }
 
-    printf("%d", finalResult);
+    printf("%lf", finalResult);  
     return 0;
 }
