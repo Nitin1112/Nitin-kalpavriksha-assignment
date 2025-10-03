@@ -1,0 +1,11 @@
+{
+"name": "Nitin",
+"email": "nitin@gmail.com",
+"designation": "Senior SDE",
+"salary": 400000
+}
+
+
+
+{
+
