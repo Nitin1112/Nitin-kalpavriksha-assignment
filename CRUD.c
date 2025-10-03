@@ -2,6 +2,7 @@
 #include<stdlib.h>
 #include<string.h>
 
+// Struture for User
 typedef struct{
     char name[30];
     char email[50];
@@ -9,15 +10,17 @@ typedef struct{
     int salary;
 } User;
 
-
+// User creation method
 void createUser(){
-        FILE* f = fopen("user.txt", "a");
+    FILE* f = fopen("user.txt", "a");
     User user;
     if (f == NULL) {
         printf("Couldn't open file\n");
         return;
     }
 
+    
+    // Getting user data
     printf("\nENTER USER DATA\n\n");
 
     printf("Name: ");
@@ -36,6 +39,8 @@ void createUser(){
     scanf("%d", &user.salary);
     getchar();
 
+    
+    // inputing all data to the file
     fprintf(f, "{\n");
     fprintf(f, "\"name\": \"%s\",\n", user.name);
     fprintf(f, "\"email\": \"%s\",\n", user.email);
@@ -47,6 +52,7 @@ void createUser(){
     printf("User created successfully.\n");
 }
 
+// Printing all user 
 void readUser(){
     FILE* f = fopen("user.txt", "r");
     if (f == NULL) {
@@ -63,19 +69,20 @@ void readUser(){
     fclose(f);
 }
 
+// Update a User
 void updateUser(){
     FILE* f = fopen("user.txt", "r");
     if (f == NULL) {
         printf("Couldn't open file\n");
         return;
     }
-
+    // using temp file to write the update data
     FILE* temp = fopen("temp.txt", "w");
     if (temp == NULL) {
         fclose(f);
         return;
     }
-
+    // searching the data to be updated
     char searchName[30];
     printf("Enter name of user to update: ");
     fgets(searchName, sizeof(searchName), stdin);
@@ -96,6 +103,7 @@ void updateUser(){
                     fgets(line, sizeof(line), f);
                 }
 
+                // entering the new data of the user
                 printf("\nEnter new data for %s\n", searchName);
 
                 printf("Name: ");
@@ -135,6 +143,7 @@ void updateUser(){
     fclose(f);
     fclose(temp);
 
+    //removing old user.txt and renaming temp file to user.txt
     remove("user.txt");
     rename("temp.txt", "user.txt");
 
@@ -145,6 +154,7 @@ void updateUser(){
     }
 }
 
+// Delete a user
 void deleteUser(){
      FILE* f = fopen("user.txt", "r");
     if (f == NULL) {
@@ -166,6 +176,7 @@ void deleteUser(){
     char line[300];
     int found = 0;
 
+    // searching the data to be deleted
     while (fgets(line, sizeof(line), f)) {
         if (strstr(line, "\"name\":") != NULL) {
             char currentName[30];
@@ -175,6 +186,7 @@ void deleteUser(){
                 found = 1;
                 for (int i = 0; i < 4; i++) {
                     fgets(line, sizeof(line), f);
+                    //skipping the next 4 lines of user by not adding the lines in the new file
                 }
             } else {
                 fputs(line, temp);
@@ -190,7 +202,7 @@ void deleteUser(){
 
     fclose(f);
     fclose(temp);
-
+    // removing the old file and renaming the temp file as user.txt
     remove("user.txt");
     rename("temp.txt", "user.txt");
 
@@ -201,8 +213,9 @@ void deleteUser(){
     }
 }
 
+// Initial point
 int main(){
-    int option;
+    int option; //input
     while(1){
         printf("1. Create User\n");
         printf("2. Read All Users\n");
