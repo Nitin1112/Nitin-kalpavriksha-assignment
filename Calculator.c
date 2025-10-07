@@ -1,123 +1,167 @@
-#include<stdio.h>
-#include<stdlib.h>
-#include<string.h>
-#include<ctype.h>
+#include <ctype.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
-int main(){
-    char inputStr[1000];
-    char calStr[1000];
-    int j = 0;
+#define MAX_LENGTH 1000
 
-    fgets(inputStr, sizeof(inputStr), stdin);  // INPUT //
+void performCalculation();
+void handleInput(const char *s, char *calStrPointer);
+char *firstPass(const char *string);
+double secondPass(const char *tempStr);
 
-                    // Formatting and verifying input string 
-    //----------------------------------------------------------------------
+int main()
+{
+    while (1)
+    {
+        printf("\n=== Simple Calculator ===\n");
+        printf("1. Perform calculation\n");
+        printf("2. Exit\n");
+        printf("Enter an option: ");
 
-    inputStr[strlen(inputStr) - 1] = '\0';
-    for (int i = 0; i < strlen(inputStr); i++) {
-        if (inputStr[i] == ' ') {
-            continue;
-        }
-        else if (!isdigit(inputStr[i]) && inputStr[i] != '+' && inputStr[i] != '-' && inputStr[i] != '/' && inputStr[i] != '*') {
-            printf("Invalid String");
+        int option;
+        scanf("%d", &option);
+        getchar();
+
+        switch (option)
+        {
+        case 1:
+            performCalculation();
+            break;
+        case 2:
+            printf("Exiting...\n");
             return 0;
-        }
-        else {
-            calStr[j] = inputStr[i];
-            j++;
-        }
-    }
-    calStr[j] = '\0';
-
-                    // Handling * and / operators
-    //----------------------------------------------------------------------
-
-    int i = 0;
-    char tempStr[1000] = "";
-    while (i < strlen(calStr)) {
-        char num1Str[100] = "";
-        char num2Str[100] = "";
-        int idx1 = 0, idx2 = 0;
-        double num1, num2;
-        char op;
-
-        // Extract first number 
-        while (i < strlen(calStr) && (isdigit(calStr[i]) || calStr[i] == '.')) {
-            num1Str[idx1++] = calStr[i++];
-        }
-        num1Str[idx1] = '\0';
-        num1 = strtod(num1Str, NULL);
-
-        if (i >= strlen(calStr)) {
-            char temp[50];
-            sprintf(temp, "%.10g", num1);
-            strcat(tempStr, temp);
+        default:
+            printf("Invalid option.\n");
             break;
         }
+    }
+}
 
-        op = calStr[i++];
+void performCalculation()
+{
+    char inputStr[MAX_LENGTH];
+    char calStr[MAX_LENGTH];
 
-        // process all upcoming * and /
-        while (op == '*' || op == '/') {
-            // Extract second number
-            idx2 = 0;
-            while (i < strlen(calStr) && (isdigit(calStr[i]) || calStr[i] == '.')) {
-                num2Str[idx2++] = calStr[i++];
+    printf("\nEnter an expression: ");
+    fgets(inputStr, sizeof(inputStr), stdin);
+
+    int len = strlen(inputStr);
+    if (len > 0 && inputStr[len - 1] == '\n')
+    {
+        inputStr[len - 1] = '\0';
+    }
+
+    handleInput(inputStr, calStr);
+
+    char *firstPassResult = firstPass(calStr);
+    double value = secondPass(firstPassResult);
+
+    printf("Result: %.10g\n", value);
+}
+
+void handleInput(const char *s, char *calStrPointer)
+{
+    int j = 0;
+    for (int i = 0; i < strlen(s); i++)
+    {
+        if (s[i] == ' ')
+            continue;
+
+        if (!isdigit((unsigned char)s[i]) && s[i] != '+' &&
+            s[i] != '-' && s[i] != '/' && s[i] != '*')
+        {
+            printf("Invalid character detected: %c\n", s[i]);
+            calStrPointer[0] = '\0';
+            return;
+        }
+
+        calStrPointer[j++] = s[i];
+    }
+    calStrPointer[j] = '\0';
+}
+
+char* firstPass(const char* string) {
+    static char tempStr[MAX_LENGTH];
+    tempStr[0] = '\0';
+    int i = 0;
+
+    while (i < strlen(string)) {
+        char numStr[100] = "";
+        int idx = 0;
+        double num1 = 0, num2 = 0;
+        char op = 0;
+
+        int sign1 = 1;
+        if (string[i] == '-') { sign1 = -1; i++; }
+        else if (string[i] == '+') { i++; }
+
+        while (i < strlen(string) && (isdigit((unsigned char)string[i]) || string[i] == '.')) {
+            numStr[idx++] = string[i++];
+        }
+        numStr[idx] = '\0';
+        num1 = strtod(numStr, NULL) * sign1;
+
+        while (i < strlen(string) && (string[i] == '*' || string[i] == '/')) {
+            op = string[i++];
+
+            int sign2 = 1;
+            if (string[i] == '-') { sign2 = -1; i++; }
+            else if (string[i] == '+') { i++; }
+
+            idx = 0;
+            while (i < strlen(string) && (isdigit((unsigned char)string[i]) || string[i] == '.')) {
+                numStr[idx++] = string[i++];
             }
-            num2Str[idx2] = '\0';
-            num2 = strtod(num2Str, NULL);
+            numStr[idx] = '\0';
+            num2 = strtod(numStr, NULL) * sign2;
 
-            if (op == '*') {
-                num1 *= num2;
-            }
+            if (op == '*') num1 *= num2;
             else if (op == '/') {
-                if (num2 == 0) {
-                    printf("Division by Zero occured");
-                    return 0;
-                }
+                if (num2 == 0) { printf("Division by zero!\n"); return ""; }
                 num1 /= num2;
-            }
-
-            // Checking if there is another * or /
-            if (i < strlen(calStr)) {
-                op = calStr[i++];
-            } else {
-                break;
             }
         }
 
-        // Storing the result
         char temp[50];
-        sprintf(temp, "%.10g", num1); 
+        sprintf(temp, "%.10g", num1);
         strcat(tempStr, temp);
 
-        if (op == '+' || op == '-') {
+        if (i < strlen(string) && (string[i] == '+' || string[i] == '-')) {
             int len = strlen(tempStr);
-            tempStr[len] = op;
+            tempStr[len] = string[i++];
             tempStr[len + 1] = '\0';
         }
     }
 
-                        // Handling + and - operators
-    //----------------------------------------------------------------------
+    return tempStr;
+}
 
+
+double secondPass(const char *tempStr)
+{
     double finalResult = 0;
-    i = 0;
+    int i = 0;
     int sign = 1;
-    while (i < strlen(tempStr)) {
+
+    while (i < strlen(tempStr))
+    {
         char numStr[100] = "";
         int idx = 0;
 
-        if (tempStr[i] == '+') {
+        if (tempStr[i] == '+')
+        {
             sign = 1;
             i++;
         }
-        else if (tempStr[i] == '-') {
+        else if (tempStr[i] == '-')
+        {
             sign = -1;
             i++;
         }
 
-        while (i < strlen(tempStr) && (isdigit(tempStr[i]) || tempStr[i] == '.')) {
+        while (i < strlen(tempStr) && (isdigit((unsigned char)tempStr[i]) || tempStr[i] == '.'))
+        {
             numStr[idx++] = tempStr[i++];
         }
         numStr[idx] = '\0';
@@ -125,6 +169,5 @@ int main(){
         finalResult += sign * strtod(numStr, NULL);
     }
 
-    printf("%lf", finalResult);  
-    return 0;
+    return finalResult;
 }
