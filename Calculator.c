@@ -7,12 +7,19 @@
 
 void performCalculation();
 void handleInput(const char *s, char *calStrPointer);
-char *firstPass(const char *string);
-double secondPass(const char *tempStr);
+char *handleAddAndSub(const char *string);
+double handleDivisionAndMultiplication(const char *tempStr);
+int checkCharacters(char c);
+int menu();
 
-int main()
-{
-    while (1)
+double extractNumber(const char *str, int *i);
+double processMultiplicationAndDivision(const char *string, int *i, double firstNum);
+void appendNumberWithOperator(char *dest, double number, char op);
+void appendNumber(char *dest, double number);
+double extractSignedNumber(const char *tempStr, int *i, int *sign);
+
+int menu(){
+    while(1)
     {
         printf("\n=== Simple Calculator ===\n");
         printf("1. Perform calculation\n");
@@ -38,6 +45,12 @@ int main()
     }
 }
 
+int main()
+{
+    
+    return menu();
+}
+
 void performCalculation()
 {
     char inputStr[MAX_LENGTH];
@@ -54,10 +67,20 @@ void performCalculation()
 
     handleInput(inputStr, calStr);
 
-    char *firstPassResult = firstPass(calStr);
-    double value = secondPass(firstPassResult);
+    char *Result1 = handleAddAndSub(calStr);
+    double value = handleDivisionAndMultiplication(Result1);
 
     printf("Result: %.10g\n", value);
+}
+
+int checkCharacters(char c)
+{
+    if (!isdigit((unsigned char)c) && c != '+' && c != '-' && c != '/' && c != '*')
+    {
+        return 1;
+    }
+    else
+        return 0;
 }
 
 void handleInput(const char *s, char *calStrPointer)
@@ -68,8 +91,7 @@ void handleInput(const char *s, char *calStrPointer)
         if (s[i] == ' ')
             continue;
 
-        if (!isdigit((unsigned char)s[i]) && s[i] != '+' &&
-            s[i] != '-' && s[i] != '/' && s[i] != '*')
+        if (checkCharacters(s[i]))
         {
             printf("Invalid character detected: %c\n", s[i]);
             calStrPointer[0] = '\0';
@@ -81,92 +103,115 @@ void handleInput(const char *s, char *calStrPointer)
     calStrPointer[j] = '\0';
 }
 
-char* firstPass(const char* string) {
+double extractNumber(const char *str, int *i)
+{
+    char numStr[100] = "";
+    int idx = 0;
+    while (isdigit((unsigned char)str[*i]) || str[*i] == '.')
+    {
+        numStr[idx++] = str[(*i)++];
+    }
+    numStr[idx] = '\0';
+    return strtod(numStr, NULL);
+}
+
+double processMultiplicationAndDivision(const char *string, int *i, double firstNum)
+{
+    while (*i < strlen(string) && (string[*i] == '*' || string[*i] == '/'))
+    {
+        char op = string[(*i)++];
+        int sign2 = 1;
+        if (string[*i] == '-') { sign2 = -1; (*i)++; }
+        else if (string[*i] == '+') { (*i)++; }
+
+        double num2 = extractNumber(string, i) * sign2;
+
+        if (op == '*')
+            firstNum *= num2;
+        else if (op == '/')
+        {
+            if (num2 == 0)
+            {
+                printf("Division by zero!\n");
+                return 0;
+            }
+            firstNum /= num2;
+        }
+    }
+    return firstNum;
+}
+
+void appendNumber(char *dest, double number)
+{
+    char temp[50];
+    sprintf(temp, "%.10g", number);
+    strcat(dest, temp);
+}
+
+void appendNumberWithOperator(char *dest, double number, char op)
+{
+    appendNumber(dest, number);
+    int len = strlen(dest);
+    dest[len] = op;
+    dest[len + 1] = '\0';
+}
+
+char *handleAddAndSub(const char *string)
+{
     static char tempStr[MAX_LENGTH];
     tempStr[0] = '\0';
     int i = 0;
 
-    while (i < strlen(string)) {
-        char numStr[100] = "";
-        int idx = 0;
-        double num1 = 0, num2 = 0;
-        char op = 0;
-
+    while (i < strlen(string))
+    {
         int sign1 = 1;
         if (string[i] == '-') { sign1 = -1; i++; }
         else if (string[i] == '+') { i++; }
 
-        while (i < strlen(string) && (isdigit((unsigned char)string[i]) || string[i] == '.')) {
-            numStr[idx++] = string[i++];
+        double num1 = extractNumber(string, &i) * sign1;
+        num1 = processMultiplicationAndDivision(string, &i, num1);
+
+        if (i < strlen(string) && (string[i] == '+' || string[i] == '-'))
+        {
+            appendNumberWithOperator(tempStr, num1, string[i]);
+            i++;
         }
-        numStr[idx] = '\0';
-        num1 = strtod(numStr, NULL) * sign1;
-
-        while (i < strlen(string) && (string[i] == '*' || string[i] == '/')) {
-            op = string[i++];
-
-            int sign2 = 1;
-            if (string[i] == '-') { sign2 = -1; i++; }
-            else if (string[i] == '+') { i++; }
-
-            idx = 0;
-            while (i < strlen(string) && (isdigit((unsigned char)string[i]) || string[i] == '.')) {
-                numStr[idx++] = string[i++];
-            }
-            numStr[idx] = '\0';
-            num2 = strtod(numStr, NULL) * sign2;
-
-            if (op == '*') num1 *= num2;
-            else if (op == '/') {
-                if (num2 == 0) { printf("Division by zero!\n"); return ""; }
-                num1 /= num2;
-            }
-        }
-
-        char temp[50];
-        sprintf(temp, "%.10g", num1);
-        strcat(tempStr, temp);
-
-        if (i < strlen(string) && (string[i] == '+' || string[i] == '-')) {
-            int len = strlen(tempStr);
-            tempStr[len] = string[i++];
-            tempStr[len + 1] = '\0';
+        else
+        {
+            appendNumber(tempStr, num1);
         }
     }
 
     return tempStr;
 }
 
+double extractSignedNumber(const char *tempStr, int *i, int *sign)
+{
+    *sign = 1;
+    if (tempStr[*i] == '+') { *sign = 1; (*i)++; }
+    else if (tempStr[*i] == '-') { *sign = -1; (*i)++; }
 
-double secondPass(const char *tempStr)
+    char numStr[100] = "";
+    int idx = 0;
+    while (*i < strlen(tempStr) && (isdigit((unsigned char)tempStr[*i]) || tempStr[*i] == '.'))
+    {
+        numStr[idx++] = tempStr[(*i)++];
+    }
+    numStr[idx] = '\0';
+
+    return strtod(numStr, NULL);
+}
+
+double handleDivisionAndMultiplication(const char *tempStr)
 {
     double finalResult = 0;
     int i = 0;
-    int sign = 1;
 
     while (i < strlen(tempStr))
     {
-        char numStr[100] = "";
-        int idx = 0;
-
-        if (tempStr[i] == '+')
-        {
-            sign = 1;
-            i++;
-        }
-        else if (tempStr[i] == '-')
-        {
-            sign = -1;
-            i++;
-        }
-
-        while (i < strlen(tempStr) && (isdigit((unsigned char)tempStr[i]) || tempStr[i] == '.'))
-        {
-            numStr[idx++] = tempStr[i++];
-        }
-        numStr[idx] = '\0';
-
-        finalResult += sign * strtod(numStr, NULL);
+        int sign;
+        double number = extractSignedNumber(tempStr, &i, &sign);
+        finalResult += sign * number;
     }
 
     return finalResult;
