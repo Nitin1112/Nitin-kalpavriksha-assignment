@@ -1,7 +1,9 @@
 #include <stdio.h>
 #include <string.h>
+#include <stdbool.h>
 
 #define NAME_LENGTH 30
+#define SUBJECT_LENGTH 3
 #define TOTAL_SUBJECTS 3
 
 #define GRADE_A_LIMIT 85
@@ -13,86 +15,106 @@ typedef struct
 {
     int rollNumber;
     char name[NAME_LENGTH];
-    int science;
-    int math;
-    int social;
-    int totalMarks;
+    int marks[SUBJECT_LENGTH];
 } Student;
 
-typedef enum performance
+typedef enum Grade
 {
-    A = 5,
-    B = 4,
-    C = 3,
-    D = 2,
-} performance;
+    A = 'A',
+    B = 'B',
+    C = 'C',
+    D = 'D',
+    F = 'F',
+} Grade;
+
+typedef enum GradeStars
+{
+    STARS_A = 5,
+    STARS_B = 4,
+    STARS_C = 3,
+    STARS_D = 2,
+    STARS_E = 1,
+    STARS_F = 0
+} GradeStars;
 
 double calculateAverageMark(int totalMarks)
 {
     return (double)(totalMarks) / (TOTAL_SUBJECTS * 1.0);
 }
 
-char getGrade(double average)
+Grade getGrade(double average)
 {
     if (average >= GRADE_A_LIMIT)
     {
-        return 'A';
+        return A;
     }
     else if (average >= GRADE_B_LIMIT)
     {
-        return 'B';
+        return B;
     }
     else if (average >= GRADE_C_LIMIT)
     {
-        return 'C';
+        return C;
     }
     else if (average >= GRADE_D_LIMIT)
     {
-        return 'D';
+        return D;
     }
     else
     {
-        return 'F';
+        return F;
     }
 }
 
-void analyzePerformance(performance p)
+void analyzePerformance(Grade g)
 {
-    for (int i = 0; i < p; i++)
+    int stars = 0;
+    switch (g)
+    {
+        case A:
+            stars = STARS_A;
+            break;
+        case B:
+            stars = STARS_B;
+            break;
+        case C:
+            stars = STARS_C;
+            break;
+        case D:
+            stars = STARS_D;
+            break;
+        case F:
+            stars = STARS_F;
+            break;
+    }
+    for (int i = 0; i < stars; i++)
         printf("*");
 }
 
 int calculateTotalMarks(Student *student)
 {
-    return student->science + student->math + student->social;
+    int totalMarks = 0;
+    for (int index = 0; index < SUBJECT_LENGTH; index++)
+    {
+        totalMarks += student->marks[index];
+    }
+    return totalMarks;
 }
 
 void output(Student *s)
 {
     printf("Roll: %d\n", s->rollNumber);
     printf("Name: %s\n", s->name);
-    printf("Total: %d\n", s->totalMarks);
-    double average = calculateAverageMark(s->totalMarks);
-    printf("Average: %f\n", average);
-    printf("Grade: %c\n", getGrade(average));
-    if (getGrade(average) != 'F')
+    int totalMarks = calculateTotalMarks(s);
+    printf("Total: %d\n", totalMarks);
+    double averageMark = calculateAverageMark(totalMarks);
+    Grade grade = getGrade(averageMark);
+    printf("Average: %f\n", averageMark);
+    printf("Grade: %c\n", grade);
+    if (grade != F)
     {
         printf("Performance:");
-        switch (getGrade(average))
-        {
-            case 'A':
-                analyzePerformance(A);
-                break;
-            case 'B':
-                analyzePerformance(B);
-                break;
-            case 'C':
-                analyzePerformance(C);
-                break;
-            case 'D':
-                analyzePerformance(D);
-                break;
-        }
+        analyzePerformance(grade);
         printf("\n");
     }
     printf("\n");
@@ -116,30 +138,33 @@ void printAllRollNumbers(Student *students, int n, int i)
     printAllRollNumbers(students, n, i);
 }
 
-int checkMarkRange(int m)
+bool areMarksInRange(int m)
 {
     if (m < 0 || m > 100)
-        return 1;
-    return 0;
+        return false;
+    return true;
 }
 
-int handleInput(Student *students, Student *s, int count)
+bool handleInput(Student *students, Student *s, int count)
 {
     for (int index = 0; index < count; index++)
     {
         if (students[index].rollNumber == s->rollNumber)
         {
-            printf("You entered the same Roll Number again !");
-            return 0;
+            printf("You entered the same Roll Number again !\n");
+            return false;
         }
     }
 
-    if (checkMarkRange(s->math) || checkMarkRange(s->science) || checkMarkRange(s->social))
+    for (int index = 0; index < SUBJECT_LENGTH; index++)
     {
-        printf("Enter valid mark range !");
-        return 0;
+        if (!areMarksInRange(s->marks[index]))
+        {
+            printf("Enter valid mark range\n");
+            return false;
+        }
     }
-    return 1;
+    return true;
 }
 
 void sortByRollNumber(Student *students, int n)
@@ -172,12 +197,12 @@ void studentPerformanceAnalyzer()
     while (index < n)
     {
         Student s;
-        scanf("%d %s %d %d %d", &s.rollNumber, s.name, &s.science, &s.math, &s.social);
+        scanf("%d %s %d %d %d", &s.rollNumber, s.name, &s.marks[0], &s.marks[1], &s.marks[2]);
         if (!handleInput(students, &s, index))
         {
-            return;
+            printf("Re-enter !!\n");
+            continue;
         }
-        s.totalMarks = calculateTotalMarks(&s);
         students[index++] = s;
     }
 
