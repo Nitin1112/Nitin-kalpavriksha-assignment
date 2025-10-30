@@ -13,6 +13,26 @@ typedef struct Product
     int quantity;
 } Product;
 
+bool isValidId(int id)
+{
+    if (id <= 0)
+    {
+        printf("Invalid id\n");
+        return false;
+    }
+    return true;
+}
+
+int getStringLength(char *str)
+{
+    int idx = 0;
+    while (str[idx] != '\0')
+    {
+        idx++;
+    }
+    return idx;
+}
+
 Product getValues()
 {
     Product product;
@@ -35,31 +55,16 @@ bool isPresent(Product newProduct, Product *products, int size)
     {
         if (newProduct.id == products[idx].id)
         {
+            printf("Product already exists\n");
             return true;
         }
     }
     return false;
 }
 
-bool isValidPriceRange(Product newProduct)
+bool isValidPriceRange(float price)  
 {
-    if (newProduct.price <= 0)
-        return false;
-    return true;
-}
-
-bool isValidValues(Product newProduct, Product *products, int size)
-{
-    if (!isValidId(newProduct.id))
-    {
-        printf("Invalid id");
-    }
-    else if (isPresent(newProduct, products, size))
-    {
-        printf("Product already exist\n");
-        return false;
-    }
-    else if (!isValidPriceRange(newProduct))
+    if (price <= 0)
     {
         printf("Invalid price range\n");
         return false;
@@ -67,30 +72,71 @@ bool isValidValues(Product newProduct, Product *products, int size)
     return true;
 }
 
-bool isValidId(int id)
+bool isValidCharacter(char chr)  
 {
-    if (id <= 0)
+    if ((chr >= 'a' && chr <= 'z') ||
+        (chr >= 'A' && chr <= 'Z') ||
+        (chr >= '0' && chr <= '9') ||
+        chr == '-')
+    {
+        return true;
+    }
+    return false;
+}
+
+bool isValidProductName(char *str)
+{
+    for (int i = 0; i < getStringLength(str); i++)
+    {
+        if (!isValidCharacter(str[i]))
+        {
+            printf("Enter valid name\n");
+            return false;
+        }
+    }
+    return true;
+}
+
+bool isValidQuantity(int quantity)
+{
+    if (quantity < 0)
+    {
+        printf("Enter valid quantity\n");
+        return false;
+    }
+    return true;
+}
+
+bool isValidValues(Product newProduct, Product *products, int size)
+{
+    if (!isValidId(newProduct.id))
+    {
+        return false;
+    }
+    else if (isPresent(newProduct, products, size))
+    {
+        return false;
+    }
+    else if (!isValidProductName(newProduct.name)) 
+    {
+        return false;
+    }
+    else if (!isValidPriceRange(newProduct.price))
+    {
+        return false;
+    }
+    else if (!isValidQuantity(newProduct.quantity))
     {
         return false;
     }
     return true;
 }
 
-int getStringLength(char *str)
-{
-    int len = 0;
-    int idx = 0;
-    while (str[idx] != '\0')
-    {
-        len++;
-        idx++;
-    }
-    return len;
-}
-
 void printProductDetails(Product **products, int *size, int idx)
 {
-    printf("Product ID: %d | Name: %s | Price: %.2f | Quantity: %d\n", (*products)[idx].id, (*products)[idx].name, (*products)[idx].price, (*products)[idx].quantity);
+    printf("Product ID: %d | Name: %s | Price: %.2f | Quantity: %d\n",
+           (*products)[idx].id, (*products)[idx].name,
+           (*products)[idx].price, (*products)[idx].quantity);
 }
 
 void addNewProduct(Product **products, int *size)
@@ -140,26 +186,32 @@ void updateQuantity(Product *products, int size)
     {
         printf("Enter Product ID to update quantity: ");
         scanf("%d", &id);
-        if (isValidId(id))
+        if (!isValidId(id))
         {
-            break;
+            continue;
         }
-        else
+        for (int idx = 0; idx < size; idx++)
         {
-            printf("Invalid Id");
+            if (products[idx].id == id)
+            {
+                int quantity = 0;
+                printf("Enter new quantity: ");
+                scanf("%d", &quantity);
+                if (!isValidQuantity(quantity))
+                {
+                    continue;
+                }
+                else
+                {
+                    products[idx].quantity = quantity;
+                }
+                printf("Quantity updated successfully!\n");
+                return;
+            }
         }
+        printf("Product not found\n");
+        break;
     }
-    for (int idx = 0; idx < size; idx++)
-    {
-        if (products[idx].id == id)
-        {
-            printf("Enter new quantity: ");
-            scanf("%d", &products[idx].quantity);
-            printf("Quantity updated successfully!\n");
-            return;
-        }
-    }
-    printf("Product not found\n");
 }
 
 void searchById(Product *products, int size)
@@ -175,7 +227,7 @@ void searchById(Product *products, int size)
         }
         else
         {
-            printf("Invalid Id");
+            printf("Invalid Id\n");
         }
     }
 
@@ -191,7 +243,7 @@ void searchById(Product *products, int size)
     printf("Product not found\n");
 }
 
-int containsSubstring(const char *str, const char *substr)
+int containsSubstring(char *str, char *substr)
 {
     int lenStr = getStringLength(str);
     int lenSub = getStringLength(substr);
@@ -217,7 +269,7 @@ void searchByName(Product *products, int size)
 {
     char name[NAME_LENGTH];
     getchar();
-    printf("Enter Name to search(partial allowed): ");
+    printf("Enter Name to search (partial allowed): ");
     fgets(name, NAME_LENGTH, stdin);
     name[getStringLength(name) - 1] = '\0';
 
@@ -251,7 +303,7 @@ void searchByPriceRange(Product *products, int size)
         }
         else
         {
-            printf("Invalid values");
+            printf("Invalid values\n");
         }
     }
     int found = 0;
@@ -280,7 +332,7 @@ void deleteProduct(Product **products, int *size)
         }
         else
         {
-            printf("Invalid Id");
+            printf("Invalid Id\n");
         }
     }
     int found = -1;
@@ -302,7 +354,15 @@ void deleteProduct(Product **products, int *size)
         (*products)[idx] = (*products)[idx + 1];
     }
     (*size)--;
-    *products = (Product *)realloc(*products, (*size) * sizeof(Product));
+
+    if (*size > 0)
+        *products = (Product *)realloc(*products, (*size) * sizeof(Product));
+    else
+    {
+        free(*products);
+        *products = NULL;
+    }
+
     printf("Product deleted successfully!\n");
 }
 
@@ -348,7 +408,7 @@ int inventoryMenu(Product *products, int *size)
             break;
         case 8:
             free(products);
-            printf("memory released successfully. Exiting program...");
+            printf("Memory released successfully. Exiting program...\n");
             return 0;
         default:
             printf("Enter valid option !!\n");
@@ -359,8 +419,17 @@ int inventoryMenu(Product *products, int *size)
 void dynamicInventory()
 {
     int size = 0;
-    printf("Enter the initial number of products: ");
-    scanf("%d", &size);
+    while (1)
+    {
+        printf("Enter the initial number of products: ");
+        scanf("%d", &size);
+        if (size < 0)
+        {
+            printf("Invalid number\n");
+        }
+        else
+            break;
+    }
     Product *products = (Product *)calloc(size, sizeof(Product));
     for (int idx = 0; idx < size; idx++)
     {
