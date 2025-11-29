@@ -39,6 +39,11 @@ typedef struct TempNode {
     struct TempNode *next;
 } TempNode;
 
+typedef enum {
+    BATSMAN = 1,
+    BOWLER = 2,
+    ALLROUNDER = 3
+} Role;
 
 int findTeamId(int idx, Team *teams){
     for(int id = 1; id < 11; id++){
@@ -62,9 +67,9 @@ float calculatePerformanceIndex(PlayerNode *p){
 }
 
 int rolePriority(char *role){
-    if(strcmp(role,"Batsman")==0) return 1;
-    if(strcmp(role,"Bowler")==0) return 2;
-    return 3; 
+    if(strcmp(role,"Batsman")==0) return BATSMAN;
+    if(strcmp(role,"Bowler")==0) return BOWLER;
+    return ALLROUNDER; 
 }
 
 void updateRoleHeads(Team *t){
