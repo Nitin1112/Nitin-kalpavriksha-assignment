@@ -24,7 +24,7 @@ QueueNode **hashMap = NULL;
 int capacity = 0;
 int size = 0;
 
-void getAction(char *input,char *action){
+void findAndStoreAction(char *input,char *action){
     int i=0;
     char temp[STRING_LENGTH];
     strcpy(temp,input);
@@ -81,7 +81,7 @@ bool checkArgs(char* args,int *key,char* value){
     return true;
 }
 
-int hashFunction(int key){
+int hash(int key){
     return key % capacity;
 }
 
@@ -125,7 +125,7 @@ QueueNode* addCache(int key,char *value){
 }
 
 void removeFromHashMap(QueueNode *node){
-    int index = hashFunction(node->key);
+    int index = hash(node->key);
 
     for(int i=0;i<capacity;i++){
         int idx = (index + i) % capacity;
@@ -137,7 +137,7 @@ void removeFromHashMap(QueueNode *node){
                 QueueNode *temp = hashMap[j];
                 hashMap[j] = NULL;
 
-                int newIndex = hashFunction(temp->key);
+                int newIndex = hash(temp->key);
                 for(int k=0;k<capacity;k++){
                     int ni = (newIndex + k) % capacity;
                     if(hashMap[ni] == NULL){
@@ -173,7 +173,7 @@ void removeLRU(){
 
 char* get(char* args){
     int key = stringToInt(args);
-    int index = hashFunction(key);
+    int index = hash(key);
 
     for(int i=0; i<capacity; i++){
         int idx = (index + i) % capacity;
@@ -201,7 +201,7 @@ void put(int key,char* value){
     QueueNode *node = addCache(key,value);
     size++;
 
-    int index = hashFunction(key);
+    int index = hash(key);
     for(int i=0;i<capacity;i++){
         int idx = (index + i) % capacity;
         if(hashMap[idx] == NULL){
@@ -228,7 +228,7 @@ void LRU(){
         fgets(input,STRING_LENGTH,stdin);
         input[strcspn(input,"\n")]='\0';
 
-        getAction(input,action);
+        findAndStoreAction(input,action);
         if(strlen(action)==0){
             printf("Invalid input\n");
             continue;
